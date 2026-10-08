@@ -75,6 +75,7 @@ export function registerInviteDeeplink(deps: InviteDeeplinkDeps): void {
     isPackaged: app?.isPackaged === true,
     platform: process.platform,
     protocolClientPath: deps.protocolClientPath,
+    registerProtocolClient: deps.registerProtocolClient,
   });
   if (registration.register) {
     if (registration.clientPath) {

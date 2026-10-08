@@ -79,6 +79,7 @@ import { startPackagedSidecars } from "./sidecars.js";
 import { reportStartupFailure, resolveStartupDistinctId } from "./startup-telemetry.js";
 import { resolvePackagedWindowTitle } from "./window-title.js";
 import { syncWindowsUninstallDisplayVersion } from "./windows-lifecycle.js";
+import { applyPackagedUpdaterEnv, isCodexPackagedBuild } from "./updater-policy.js";
 
 let packagedLogger: PackagedDesktopLogger | null = null;
 const secondInstanceHandoff = createPackagedSecondInstanceHandoff();
@@ -99,12 +100,6 @@ let startupTelemetryContext:
       nativeModulePath: string | null;
     }
   | null = null;
-
-function applyPackagedUpdaterEnv(updateMetadataUrl: string | null): void {
-  if (updateMetadataUrl == null) return;
-  if (process.env.OD_UPDATE_METADATA_URL != null && process.env.OD_UPDATE_METADATA_URL.length > 0) return;
-  process.env.OD_UPDATE_METADATA_URL = updateMetadataUrl;
-}
 
 async function main(): Promise<void> {
   const config = await readPackagedConfig();
@@ -310,7 +305,7 @@ async function main(): Promise<void> {
     platform: process.platform,
   });
   applyPackagedElectronPathOverrides(paths);
-  applyPackagedUpdaterEnv(activeConfig.updateMetadataUrl);
+  applyPackagedUpdaterEnv(activeConfig);
   if (!claimPackagedSingleInstanceLock(app, (argv) => {
     secondInstanceHandoff.handle(findPackagedDeeplinkArg(argv));
   })) {
@@ -440,6 +435,7 @@ async function main(): Promise<void> {
       }
     },
     windowTitle: resolvePackagedWindowTitle(activeConfig),
+    registerInviteProtocolClient: !isCodexPackagedBuild(activeConfig),
     inviteProtocolClientPath:
       process.platform === "win32" ? launcherRuntime.installedLaunchPath : null,
     async onExternalShow() {

@@ -42,6 +42,11 @@ import { MEDIA_PROVIDERS } from './models.js';
 import { expandHomePrefix } from '../home-expansion.js';
 import { resolveXAIBearer } from '../integrations/xai-credentials.js';
 import { isSandboxModeEnabled } from '../sandbox-mode.js';
+import { agentCliEnvForAgent, appConfigDir, readAppConfig } from '../app-config.js';
+import { spawnEnvForAgent } from '../runtimes/env.js';
+import { resolveAgentExecutable } from '../runtimes/executables.js';
+import { codexAgentDef } from '../runtimes/defs/codex.js';
+import { resolveCodexConfigPath } from '../codex-config-normalize.js';
 
 const PROVIDER_IDS = MEDIA_PROVIDERS.map((p) => p.id);
 type ProviderEntry = { apiKey?: string; baseUrl?: string; model?: string };
@@ -293,6 +298,31 @@ function apiKeyFromCodexAuth(data: unknown): string {
   return readNestedString(data, ['OPENAI_API_KEY']);
 }
 
+/** Read the same runtime environment used by the Codex chat adapter. */
+export async function resolveCodexImagegenEnv(projectRoot: string): Promise<NodeJS.ProcessEnv> {
+  const config = await readAppConfig(appConfigDir(projectRoot));
+  const env = spawnEnvForAgent('codex', process.env, agentCliEnvForAgent(config.agentCliEnv, 'codex'));
+  // A relative tool home must resolve identically on the read path and when
+  // the child runs from the selected project directory.
+  env.CODEX_HOME = path.resolve(path.dirname(resolveCodexConfigPath(env)));
+  return env;
+}
+
+/** Local readiness only: subscription entitlement and quota are checked by Codex. */
+export async function resolveCodexSubscriptionStatus(
+  projectRoot: string,
+  env?: NodeJS.ProcessEnv,
+): Promise<{ available: boolean; executable?: string }> {
+  const runtimeEnv = env ?? await resolveCodexImagegenEnv(projectRoot);
+  if (isSandboxModeEnabled(runtimeEnv)) return { available: false };
+  const auth = await readJsonIfPresent(path.join(path.dirname(resolveCodexConfigPath(runtimeEnv)), 'auth.json'));
+  const mode = readNestedString(auth, ['auth_mode']);
+  const token = readNestedString(auth, ['tokens', 'access_token']);
+  if (mode === 'apikey' || !token || (mode && mode !== 'chatgpt')) return { available: false };
+  const executable = resolveAgentExecutable(codexAgentDef, runtimeEnv as Record<string, string>);
+  return executable ? { available: true, executable } : { available: false };
+}
+
 async function resolveOpenAIAuthFileCredential(): Promise<OAuthCredential | null> {
   if (isSandboxModeEnabled(process.env)) return null;
   const home = os.homedir();
@@ -354,6 +384,7 @@ async function resolveXAIOAuthCredential(
  * Returns { apiKey, baseUrl } where either may be empty string.
  */
 export async function resolveProviderConfig(projectRoot: string, providerId: string): Promise<ProviderEntry> {
+  if (providerId === 'codex') return { apiKey: '', baseUrl: '' };
   const stored = await readStored(projectRoot);
   const entry = stored[providerId] || {};
   const envKey = readEnvKey(providerId);
@@ -394,6 +425,11 @@ export async function readMaskedConfig(projectRoot: string): Promise<MaskedConfi
   const stored = await readStored(projectRoot);
   const providers: MaskedConfigResponse['providers'] = {};
   for (const id of PROVIDER_IDS) {
+    if (id === 'codex') {
+      const status = await resolveCodexSubscriptionStatus(projectRoot);
+      providers[id] = { configured: status.available, source: status.available ? 'codex-subscription' : 'unset', apiKeyTail: '', baseUrl: '' };
+      continue;
+    }
     const entry = stored[id] || {};
     const envKey = readEnvKey(id);
     const hasStoredKey = typeof entry.apiKey === 'string' && entry.apiKey.length > 0;
@@ -440,6 +476,7 @@ export async function writeConfig(projectRoot: string, body: unknown) {
   const prior = await readStored(projectRoot);
   const next: ProviderMap = {};
   for (const id of PROVIDER_IDS) {
+    if (id === 'codex') continue; // Subscription provider has no stored API credentials.
     const entry = incoming[id];
     if (!isRecord(entry)) continue;
     const incomingApiKey =
@@ -516,6 +553,7 @@ export async function seedProviderIfMissing(
   providerId: string,
   entry: { apiKey?: string; baseUrl?: string; model?: string },
 ): Promise<boolean> {
+  if (providerId === 'codex') return false;
   if (!PROVIDER_IDS.includes(providerId)) return false;
   const apiKey = entry.apiKey?.trim() ?? '';
   if (!apiKey) return false;

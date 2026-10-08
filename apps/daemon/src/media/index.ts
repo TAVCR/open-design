@@ -20,6 +20,7 @@
 //                              plus text-to-speech via /v1/audio/speech,
 //                              with auto-detection for Azure OpenAI
 //                              deployments based on the configured base URL
+//   * provider 'codex'      → explicit local Codex CLI subscription imagegen
 //   * provider 'volcengine' → Volcengine Ark async tasks API for
 //                              Doubao Seedance 2.0 (video) and Seedream
 //                              (image)
@@ -94,6 +95,7 @@ import {
   resolveHyperFramesNodeBin,
 } from './hyperframes-runtime.js';
 import { renderVelaImage, renderVelaVideo } from './vela.js';
+import { renderCodexImage } from './codex-imagegen.js';
 import {
   ensureProject,
   kindFor,
@@ -351,6 +353,7 @@ export async function generateMedia(args: {
   length?: number; duration?: number; voice?: string;
   audioKind?: AudioKind; language?: string; loop?: boolean; promptInfluence?: number;
   compositionDir?: string; image?: string; images?: string[]; onProgress?: ProgressFn; requestInit?: MediaRequestInit;
+  signal?: AbortSignal;
   desktopFrameRenderer?: DesktopFrameRenderer | null;
   workspaceId?: string;
   onProviderRequestSettled?: (summary: ImageGenerationRequestSummary & { providerId: string }) => void;
@@ -615,6 +618,14 @@ export async function generateMedia(args: {
       bytes = result.bytes;
       providerNote = result.providerNote;
       suggestedExt = result.suggestedExt;
+    } else if (def.provider === 'codex' && surface === 'image') {
+      const result = await renderCodexImage({
+        projectRoot, projectDir: dir, model: canonicalModel, prompt: ctx.prompt,
+        aspect: ctx.aspect, imageRefs, signal: args.signal, onProgress: args.onProgress,
+      });
+      bytes = result.bytes;
+      providerNote = result.providerNote;
+      suggestedExt = result.suggestedExt;
     } else if (def.provider === 'vela' && surface === 'image') {
       const result = await renderVelaImage(ctx);
       bytes = result.bytes;
@@ -821,7 +832,7 @@ export async function generateMedia(args: {
     // HyperFrames is a local render, not a remote provider. Falling back
     // to a stub here hides actionable composition/preflight failures and
     // can make the agent retry or narrate a fake MP4 as success.
-    if (def.provider === 'hyperframes' || def.provider === 'vela') {
+    if (def.provider === 'hyperframes' || def.provider === 'vela' || def.provider === 'codex') {
       throw err;
     }
     // A real provider failed (network blip, 4xx, missing key, …). We

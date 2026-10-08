@@ -35,6 +35,7 @@ async function registerOn(
   platform: NodeJS.Platform,
   isPackaged: boolean,
   protocolClientPath?: string,
+  registerProtocolClient?: boolean,
 ): Promise<void> {
   setPlatform(platform);
   electron.isPackaged = isPackaged;
@@ -43,6 +44,7 @@ async function registerOn(
   registerInviteDeeplink({
     resolveDaemonBaseUrl: async () => "http://127.0.0.1:17456",
     protocolClientPath,
+    registerProtocolClient,
   });
 }
 
@@ -56,6 +58,12 @@ afterEach(() => {
 });
 
 describe("registerInviteDeeplink protocol-client registration", () => {
+  it("preserves the official OS handler when a packaged fork suppresses registration", async () => {
+    await registerOn("win32", true, "C:\\fork\\Open Design.exe", false);
+    expect(electron.setAsDefaultProtocolClient).not.toHaveBeenCalled();
+    expect(electron.on).toHaveBeenCalledWith("second-instance", expect.any(Function));
+  });
+
   it("does not claim the scheme from a macOS source/dev run", async () => {
     await registerOn("darwin", false);
     expect(electron.setAsDefaultProtocolClient).not.toHaveBeenCalled();

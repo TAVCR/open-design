@@ -567,11 +567,12 @@ function renderMediaDispatchHint(
 function mediaDefaultsForRuntime(
   agentId: string | null | undefined,
   defaults?: ByokMediaDefaults,
+  projectImageModel?: string | null,
 ): ByokMediaDefaults | undefined {
   if (agentId !== 'amr') return defaults;
   return {
     ...defaults,
-    imageModel: defaults?.imageModel?.trim() || 'vela/gpt-image-2',
+    imageModel: defaults?.imageModel?.trim() || projectImageModel?.trim() || 'codex-gpt-image-2',
     videoModel:
       defaults?.videoModel?.trim()
       || 'vela/doubao-seedance-2-0-260128',
@@ -593,9 +594,9 @@ function renderRuntimeMediaDefaultsHint(
   if (lines.length === 0) return '';
   return `
 
-### OpenDesign Cloud media defaults
+### OpenDesign media defaults
 
-This AMR run uses these managed media defaults when the user has not selected
+This AMR run uses these media defaults when the user has not selected
 a different run-scoped model:
 ${lines.join('\n')}`;
 }
@@ -989,6 +990,7 @@ export function composeSystemPrompt({
   const runtimeMediaDefaults = mediaDefaultsForRuntime(
     agentId,
     byokMediaDefaults,
+    metadata?.imageModel,
   );
   // Media surfaces (image / video / audio) must be resolved BEFORE the head
   // is built: their generation contract, rather than the design charter's
@@ -2061,7 +2063,7 @@ function renderMetadataBlock(
       metadata.kind === 'image' &&
       !metadata.imageModel?.trim() &&
       tpl.model === 'gpt-image-2'
-        ? 'vela/gpt-image-2'
+        ? 'codex-gpt-image-2'
         : tpl.model;
     if (suggestedModel) meta.push(`suggested model: ${suggestedModel}`);
     if (tpl.aspect) meta.push(`aspect: ${tpl.aspect}`);

@@ -20,10 +20,11 @@ describe('mediaModelProviderId', () => {
   });
 
   it('resolves static models to their registry provider', () => {
-    // vela/gpt-image-2 is the New Project dialog default → provider vela. On a
+    // codex-gpt-image-2 is the New Project dialog default → provider codex. On a
     // SenseAudio run this !== 'senseaudio', so the guard drops the seed and the
     // user's Settings default is kept.
     expect(mediaModelProviderId('vela/gpt-image-2')).toBe('vela');
+    expect(mediaModelProviderId('codex-gpt-image-2')).toBe('codex');
     expect(mediaModelProviderId('gpt-image-2')).toBe('openai');
     expect(mediaModelProviderId('senseaudio-image-2.0-260319')).toBe('senseaudio');
     expect(mediaModelProviderId('senseaudio-tts')).toBe('senseaudio');

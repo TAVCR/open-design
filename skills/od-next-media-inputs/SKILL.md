@@ -47,6 +47,18 @@ authorization, or an error changes the decision. A catalogue entry alone does
 not prove authorization or readiness. Do not guess tool/model names or expose
 credential values.
 
+For an OpenDesign-owned image input, use the daemon dispatcher:
+`"$OD_NODE_BIN" "$OD_BIN" media generate --surface image --model <model-id>`.
+This fork's default `codex-gpt-image-2` route uses the user's ChatGPT subscription
+through Codex CLI, regardless of the selected Coding Agent. Codex CLI sign-in
+and image-generation capability are required; an OpenAI API key is not used.
+Keep a user's explicit model ID, including `gpt-image-2` for an explicitly chosen
+OpenAI API route or `vela/*` for Cloud. Never silently substitute an API or Cloud
+model when Codex is unavailable. The dispatcher enforces the active run's
+`mediaExecution` policy. This capability does not authorize dispatch during a
+planning-only stage, image search, template reuse, or post-generation enhancement
+as a substitute for requested generation. Existing sourcing and delivery rules apply.
+
 Classify failures before retrying:
 
 - Authorization: a stable missing/invalid credential is not fixed by changing

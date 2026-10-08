@@ -36,6 +36,16 @@ function fakeConfig(): PackagedConfig {
 }
 
 describe("resolvePackagedNamespacePaths", () => {
+  it("keeps fork data, sessions, runtime, and downloads separate from stable", () => {
+    const config = fakeConfig();
+    const fork = resolvePackagedNamespacePaths({ ...config, appVersion: "0.24.1-codex.1", namespace: "codex" });
+    const stable = resolvePackagedNamespacePaths(config);
+    for (const key of ["dataRoot", "electronUserDataRoot", "electronSessionDataRoot", "runtimeRoot", "updateRoot", "cacheRoot"] as const) {
+      expect(fork[key]).not.toBe(stable[key]);
+      expect(fork[key]).toContain(join("namespaces", "codex"));
+    }
+  });
+
   let restorePlatform: () => void = () => {};
 
   beforeEach(() => {

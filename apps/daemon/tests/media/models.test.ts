@@ -8,16 +8,19 @@ import {
 } from '../../src/media/models.js';
 
 describe('image model defaults', () => {
-  it('uses Vela as the only default image route', () => {
+  it('uses Codex subscription as the only default image route', () => {
     expect(IMAGE_MODELS.filter((model) => model.default).map((model) => model.id)).toEqual([
-      'vela/gpt-image-2',
+      'codex-gpt-image-2',
     ]);
-    expect(MEDIA_PROVIDERS.some((provider) => provider.id === 'codex')).toBe(false);
-    expect(IMAGE_MODELS.some((model) => model.provider === 'codex')).toBe(false);
+    expect(MEDIA_PROVIDERS.find((provider) => provider.id === 'codex')).toMatchObject({
+      integrated: true, credentialsRequired: false, settingsVisible: false,
+    });
+    expect(findMediaModel('codex-gpt-image-2')?.provider).toBe('codex');
+    expect(findMediaModel('vela/gpt-image-2')?.provider).toBe('vela');
   });
 
-  it('migrates the removed Codex image model id to Vela', () => {
-    expect(canonicalMediaModelId('codex-gpt-image-2')).toBe('vela/gpt-image-2');
+  it('preserves the saved Codex image model id without a Cloud fallback', () => {
+    expect(canonicalMediaModelId('codex-gpt-image-2')).toBe('codex-gpt-image-2');
   });
 
   it('preserves explicit OpenAI BYOK model selection', () => {

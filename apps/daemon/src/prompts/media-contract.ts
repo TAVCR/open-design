@@ -279,6 +279,13 @@ A size or tier the user names IS that ask, in any language — "2K", "1k",
 "high quality", "高质量". Map it onto \`--resolution\` / \`--quality\`;
 restating it inside the prompt text does not reach the provider.
 
+The \`codex-gpt-image-2\` model uses the user's ChatGPT subscription through
+the daemon's Codex CLI provider. It requires Codex CLI sign-in and image-generation
+capability; it does not use an OpenAI API key. All Coding Agents invoke it through
+\`"$OD_NODE_BIN" "$OD_BIN" media generate --surface image --model codex-gpt-image-2\`.
+Keep the user's explicit model ID. Never silently substitute an OpenAI API or
+Cloud model when the subscription route is unavailable; report the actual failure.
+
 OpenDesign Cloud image and video models use the \`vela/*\` catalogue prefix.
 Always invoke those models through \`"$OD_NODE_BIN" "$OD_BIN" media generate\`.
 Never invoke the \`vela\` CLI directly and never call its remote media API.
@@ -501,13 +508,14 @@ path is given.
    **dispatch without a discovery question turn**. Do not ask about model or aspect
    ratio when reasonable defaults exist — use them and start generating.
 
-   Default model selection (use these when \`imageModel\`/\`videoModel\` is unknown
+   Default model selection (use these when \`imageModel\`/\`videoModel\` is absent
    or the user asks for "best"):
    - **Image, best quality (user says "best", "highest quality", "most realistic")**:
-     use \`flux-pro-ultra\` — but tell the user it takes 60–180s
+     keep the selected image route below and request its supported quality in
+     the prompt. "Best" alone does not authorize changing provider or billing.
    - **Image, default / no preference stated**: use an explicitly named model
      in the current user message, then the run-scoped BYOK image default, then the project metadata's
-     \`imageModel\` if set; otherwise use \`vela/gpt-image-2\`
+     \`imageModel\` if set; otherwise use \`codex-gpt-image-2\`
    - **Video, best quality**: use project metadata \`videoModel\` if set; otherwise
      \`doubao-seedance-2-0-260128\`
 
