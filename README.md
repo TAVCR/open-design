@@ -1,4 +1,12 @@
-<h1 align="center">OpenDesign: The open-source Claude Design alternative</h1>
+<h1 align="center">Open Design Codex — Gustavo's custom fork</h1>
+
+This fork restores subscription-backed image generation through Codex CLI.
+Select `gpt-image-2 (Codex)` to use native imagegen, with no automatic switch to
+a paid Cloud or API provider. Windows builds use a separate `codex` namespace
+and disable the official updater. See [setup and build instructions](docs/codex-imagegen-fork.md).
+
+Based on upstream Open Design 0.24.1, licensed under Apache-2.0. The upstream
+product information below describes the original project.
 
 > ⚡ **[OpenDesign Cloud — the official model service.](https://open-design.ai/zh/pricing/)** One recharge to use both agent and image models inside OpenDesign: GPT, Claude, and DeepSeek for agents; GPT Image 2.0, Seedream 5.0 Pro, and Nano Banana 2.0 for images.
 >
