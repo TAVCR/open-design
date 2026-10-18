@@ -58,5 +58,5 @@ that app until it is deliberately replaced with a registration from the fork.
 The implementation includes catalog, dispatcher, output-import, authentication,
 selection-preservation, and package-isolation regression coverage. The historical 0.24.1 fork live check
 on Codex CLI 0.159.2 produced a real PNG with an `exec-` filename. See the
-[verification report](codex-imagegen-verification.md) for the exact commands and results; source-level tests alone
+[0.25.0 verification report](codex-imagegen-verification-0.25.0.md) for the exact commands and results; source-level tests alone
 do not establish that an installer works on another computer.
