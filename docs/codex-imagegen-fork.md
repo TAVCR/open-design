@@ -1,7 +1,7 @@
 # Open Design Codex — Gustavo's fork
 
 This fork restores an explicit subscription-backed image provider on the
-`open-design-v0.24.1` baseline. Source: <https://github.com/TAVCR/open-design>.
+`open-design-v0.25.0` baseline. Source: <https://github.com/TAVCR/open-design>.
 
 ## Generate images
 
@@ -40,7 +40,7 @@ Use Node 24 and the pinned pnpm version. From the repository checkout:
 
 ```powershell
 corepack pnpm install --frozen-lockfile
-corepack pnpm tools-pack win build --namespace codex --app-version 0.24.1-codex.1 --to nsis --portable
+corepack pnpm tools-pack win build --namespace codex --app-version 0.25.0-codex.1 --to nsis --portable
 ```
 
 The package is **Open Design Codex**, with its own Windows uninstall entry and
@@ -56,7 +56,7 @@ that app until it is deliberately replaced with a registration from the fork.
 ## Verification
 
 The implementation includes catalog, dispatcher, output-import, authentication,
-selection-preservation, and package-isolation regression coverage. A live check
+selection-preservation, and package-isolation regression coverage. The historical 0.24.1 fork live check
 on Codex CLI 0.159.2 produced a real PNG with an `exec-` filename. See the
 [verification report](codex-imagegen-verification.md) for the exact commands and results; source-level tests alone
 do not establish that an installer works on another computer.
