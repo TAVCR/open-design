@@ -50,7 +50,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "comment-identity-edit",
       "role-marker-guard",
     ],
-    "totalChars": 54489,
+    "totalChars": 55093,
   },
   "critique-enabled": {
     "sections": [
@@ -259,7 +259,7 @@ exports[`composeSystemPrompt — scenario × section golden matrix > keeps the s
       "comment-identity-edit",
       "role-marker-guard",
     ],
-    "totalChars": 54487,
+    "totalChars": 55091,
   },
   "memory-hooks-off": {
     "sections": [

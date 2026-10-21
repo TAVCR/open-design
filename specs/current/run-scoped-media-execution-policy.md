@@ -56,8 +56,10 @@ OpenDesign already has a media dispatcher. It is local-first and daemon-owned:
   the shell-callable surface used by agents.
 - `apps/daemon/src/prompts/media-contract.ts` instructs media-surface agents to
   call `"$OD_NODE_BIN" "$OD_BIN" media generate ...`.
-- `apps/daemon/src/prompts/system.ts` adds the media contract and also contains
-  a Codex imagegen override for selected image models.
+- `apps/daemon/src/prompts/system.ts` adds the media contract. Codex subscription
+  image generation uses the explicit `codex-gpt-image-2` model in
+  `apps/daemon/src/media/index.ts`; there is no agent-specific prompt override.
+  The daemon dispatcher applies the same run policy before every provider call.
 
 The run layer already has a scoped tool-token primitive:
 
@@ -125,7 +127,7 @@ in the linked issues and PRs.
 9. Add project artifact/manifest references only when bytes exist or when a
    request is intentionally recorded as an expected slot.
 10. Suppress direct media-provider prompt instructions, including the Codex
-    imagegen override, unless the policy permits byte generation.
+    subscription provider, unless the policy permits byte generation.
 11. Gate external MCP media tools in non-enabled modes so connected MCP servers
     cannot bypass OD's own media policy.
 12. Keep provider credentials and budgets outside the new policy object.
@@ -555,8 +557,9 @@ bytes are safer because OD previews remain stable.
 - Media-policy enforcement tests: `disabled` does not create task/request;
   `request-only` creates request but does not call `generateMedia`; `enabled`
   calls the existing dispatcher.
-- Prompt tests: media contract changes by mode; Codex imagegen override is
-  absent in `disabled` and `request-only`.
+- Prompt tests: media contract changes by mode; disabled runs cannot invoke the
+  Codex subscription provider through the dispatcher. No agent-specific imagegen
+  prompt override is composed; all Coding Agents use the explicit model route.
 
 ### Daemon route tests
 

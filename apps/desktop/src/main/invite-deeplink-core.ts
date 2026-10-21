@@ -89,8 +89,9 @@ export function planProtocolClientRegistration(input: {
   platform: NodeJS.Platform;
   isPackaged: boolean;
   protocolClientPath?: string | null;
+  registerProtocolClient?: boolean;
 }): ProtocolClientRegistration {
-  if (!input.isPackaged) return { register: false };
+  if (!input.isPackaged || input.registerProtocolClient === false) return { register: false };
   // Windows registers a stable installed launcher rather than the versioned
   // payload executable, which an update can delete; see `protocolClientPath`.
   const clientPath = input.platform === "win32" ? input.protocolClientPath ?? null : null;
@@ -98,6 +99,8 @@ export function planProtocolClientRegistration(input: {
 }
 
 export interface InviteDeeplinkDeps {
+  /** False preserves the existing OS handler while retaining direct dispatch. */
+  registerProtocolClient?: boolean;
   /** Resolve the running daemon's base URL; rejects when it is not up yet. */
   resolveDaemonBaseUrl: () => Promise<string>;
   /** Injectable for tests. */

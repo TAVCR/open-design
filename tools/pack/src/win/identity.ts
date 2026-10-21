@@ -17,6 +17,7 @@ export type WinInstallIdentity = {
   displayName: string;
   exeName: string;
   registryKey: string;
+  registerInviteProtocol: boolean;
   shortcutName: string;
   uninstallerName: string;
 };
@@ -32,6 +33,7 @@ export function resolveWinInstallIdentity(config: Pick<ToolPackConfig, "namespac
     displayName,
     exeName: `${PRODUCT_NAME}.exe`,
     registryKey: resolveWindowsUninstallRegistryKey(config.namespace),
+    registerInviteProtocol: config.namespace !== "codex" && releaseChannelFromVersion(config.appVersion) !== "codex",
     shortcutName: `${displayName}.lnk`,
     uninstallerName: `Uninstall ${displayName}.exe`,
   };

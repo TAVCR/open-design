@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import { resolvePackagedWindowTitle } from "../src/window-title.js";
 
 describe("resolvePackagedWindowTitle", () => {
+  it("identifies the codex fork using its custom version channel", () => {
+    expect(resolvePackagedWindowTitle({ appVersion: "0.24.1-codex.1", namespace: "codex" })).toBe("Open Design Codex");
+  });
+
   it("keeps stable windows on the public product name", () => {
     expect(resolvePackagedWindowTitle({ appVersion: "0.10.0", namespace: "release-stable-win" })).toBe("Open Design");
   });

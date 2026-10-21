@@ -95,7 +95,9 @@ export function normalizeHomeMediaInputs(
       aspect: ratio,
       template: validTemplateId(surface, stringValue(raw.template), promptTemplates),
       designSystem: stringValue(raw.designSystem) || 'the active project design system',
-      model: validOption(stringValue(raw.model), imageModels.map((m) => m.id), DEFAULT_IMAGE_MODEL),
+      // A stored explicit route must reach the dispatcher unchanged. Unknown
+      // or unavailable models fail there instead of selecting another provider.
+      model: stringValue(raw.model) || DEFAULT_IMAGE_MODEL,
       ratio,
       resolution: validOption(stringValue(raw.resolution), MEDIA_RESOLUTIONS, DEFAULT_MEDIA_RESOLUTION),
     };
@@ -239,9 +241,12 @@ function fieldsForSurface(
   imageModels: MediaModel[] = IMAGE_MODELS,
 ): InputFieldSpec[] {
   if (surface === 'image') {
+    const modelIds = imageModels.map((model) => model.id);
+    const selectedModel = stringValue(inputs.model);
+    if (selectedModel && !modelIds.includes(selectedModel)) modelIds.push(selectedModel);
     return [
       stringField('designSystem', 'Design system', 'Design system'),
-      selectField('model', 'Model', imageModels.map((m) => m.id), modelLabels(imageModels)),
+      selectField('model', 'Model', modelIds, modelLabels(imageModels)),
       selectField('ratio', 'Ratio', MEDIA_ASPECTS),
       selectField('resolution', 'Resolution', MEDIA_RESOLUTIONS, MEDIA_RESOLUTION_LABELS),
     ];

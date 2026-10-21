@@ -15,7 +15,8 @@ It applies to:
 
 - token-gated `/api/tools/media/generate`
 - in-run `od media generate` when `OD_TOOL_TOKEN` is present
-- OpenDesign's Codex image generation prompt override
+- OpenDesign's daemon-owned Codex subscription image provider, selected explicitly
+  with `codex-gpt-image-2` through the media dispatcher
 - OpenDesign's media generation prompt contract
 
 It intentionally does not apply to external MCP media tools. If a run receives

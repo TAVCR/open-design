@@ -2771,7 +2771,7 @@ function MediaProjectOptions(props:
 
 export function supportedModels(surface: 'image' | 'video' | 'audio', models: MediaModel[]): MediaModel[] {
   const supportedProviders: Record<'image' | 'video' | 'audio', Set<string>> = {
-    image: new Set(['vela', 'openai', 'volcengine', 'grok', 'nanobanana', 'openrouter', 'imagerouter', 'leonardo', 'custom-image', 'aihubmix', 'minimax']),
+    image: new Set(['codex', 'vela', 'openai', 'volcengine', 'grok', 'nanobanana', 'openrouter', 'imagerouter', 'leonardo', 'custom-image', 'aihubmix', 'minimax']),
     video: new Set(['volcengine', 'hyperframes', 'grok', 'openrouter', 'imagerouter', 'aihubmix']),
     audio: new Set(['minimax', 'fishaudio', 'senseaudio', 'elevenlabs', 'openai', 'volcengine', 'aihubmix']),
   };
@@ -2850,11 +2850,13 @@ function MediaModelCards({
 
   useEffect(() => {
     if (selected) return;
+    // A saved/template model is an explicit route. Missing credentials must
+    // not silently replace it with a different provider.
+    if (value) return;
     if (firstAvailableModelId) {
       onChange(firstAvailableModelId);
       return;
     }
-    if (value) onChange('');
   }, [firstAvailableModelId, onChange, selected, value]);
 
   const filteredGroups = useMemo(() => {
@@ -2909,7 +2911,8 @@ function MediaModelCards({
     setQuery('');
   }
 
-  const triggerTitle = selected?.model.label ?? t('newproj.modelMissingTitle');
+  const savedModel = models.find((model) => model.id === value);
+  const triggerTitle = selected?.model.label ?? savedModel?.label ?? (value || t('newproj.modelMissingTitle'));
   // The model.hint frequently leads with the provider name (e.g.
   // "OpenAI · 4K, native multimodal"), so emitting providerLabel as a
   // separate prefix would duplicate it. If the hint already opens with the
