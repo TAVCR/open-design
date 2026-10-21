@@ -1,5 +1,12 @@
 # Directory guide
 
+## Local Codex user composition preference
+
+For visual projects follow [the layered composition policy](docs/layered-composition-policy.md):
+clean reusable base images, independent editable text/graphics, and transparent
+image layers when useful. Preserve unchanged assets across iterations. Preserve
+the installed persistent instruction when upgrading either fork.
+
 This file is the single source of truth for agents entering this repository. Read this file first; after entering `apps/`, `packages/`, `tools/`, or `e2e/`, read that layer's `AGENTS.md` for module-level details. Do not copy module details back into the root file; root stays focused on cross-repository boundaries, workflow, and commands.
 
 ## Core documentation index
