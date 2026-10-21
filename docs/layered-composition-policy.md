@@ -2,6 +2,25 @@
 
 User preference recorded on 2026-10-21, shared by both Local Codex forks.
 
+## Distinguish the background and iterate only affected elements
+
+Before composition or iteration, inspect the editable source and assets. Maintain
+a project composition map with stable element IDs, role, asset/source reference
+and stacking order: background (image, color or gradient), text/typography,
+logos, shapes and every overlaid image. A flattened preview is not the background.
+If only a flattened raster exists, identify baked elements and the limits of
+editing; do not claim separate layers or reconstruct them without authorization.
+
+For each iteration classify elements as **preserve**, **edit** or **generate**.
+Reuse unchanged assets. Edit typography, copy, prices, positions, sizes, layout
+and vector shapes in the composition without ImageGen. Generate/edit only the
+specific raster asset that needs it; never send the entire artwork to ImageGen
+as a shortcut for editing a layer. A changed overlay preserves the background
+and sibling layers; a changed background preserves overlays. Verify unchanged
+asset references/content and stacking. Whole-design regeneration requires the
+user's explicit request and the project's approved scope. Flattened exports
+never replace the editable master.
+
 - Generate clean base images. Keep editable headlines, prices, calls to action,
   supplied logos and graphic overlays outside the raster image.
 - Compose text, logos, shapes and graphics as independently editable elements:
