@@ -1,6 +1,6 @@
 # Mejora del MCP de ambos forks — diseño v1
 
-Fecha: 2026-11-02. Estado: propuesta revisada, pendiente de aprobación de esta versión. No se ha modificado ni instalado código.
+Fecha: 2026-11-02. Estado: diseño v1 aprobado explícitamente por el usuario en este chat; implementado y verificado el 2026-11-02.
 
 ## Resultado esperado
 
