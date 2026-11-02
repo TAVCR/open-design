@@ -45,7 +45,7 @@ describe('project skill critique label —— 评审剧场已下线', () => {
     // This fixture owns the legacy /api/chat grammar boundary.
     process.env.OD_NEXT_STRATEGY_ROLLOUT = 'off';
     fakeBinDir = await mkdtemp(join(tmpdir(), 'od-project-skill-critique-'));
-    const fakeQwenPath = join(fakeBinDir, 'qwen');
+    const fakeQwenPath = join(fakeBinDir, process.platform === 'win32' ? 'qwen-fixture.cjs' : 'qwen');
     await writeFile(
       fakeQwenPath,
       `#!/usr/bin/env node
@@ -74,6 +74,9 @@ setTimeout(() => process.exit(0), 250);
 `,
       { mode: 0o755 },
     );
+    if (process.platform === 'win32') {
+      await writeFile(join(fakeBinDir, 'qwen.cmd'), `@"${process.execPath}" "${fakeQwenPath}" %*\r\n`);
+    }
     process.env.PATH = `${fakeBinDir}${delimiter}${originalPath ?? ''}`;
 
     const { startServer } = await import('../src/server.js');

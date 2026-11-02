@@ -26,7 +26,7 @@ it('ships ten loadable main Skills without restoring the retired machine protoco
   }
   expect(assets.taskSkill).toContain('Query');
   // The loaded prompt must gate native reads before presenting catalog choices.
-  const opening = assets.taskSkill.split('\n\n')[1];
+  const opening = assets.taskSkill.split(/\r?\n\r?\n/)[1];
   expect(opening).toContain('Before choosing a deliverable type or calling a tool');
   expect(opening).toContain('text-only planning');
   expect(assets.taskSkill).toContain('Only for a request that authorizes producing or editing an artifact');
@@ -34,7 +34,7 @@ it('ships ten loadable main Skills without restoring the retired machine protoco
   expect(assets.taskSkill).not.toMatch(/requiredDeliverables|runtime-state|planContractHash/);
   expect(DELIVERABLE_SKILLS).toHaveLength(11);
   for (const skill of DELIVERABLE_SKILLS) {
-    expect(assets.taskSkill).toContain(`${folder}/assets/task-profiles/${skill.id}.md`);
+    expect(assets.taskSkill.replaceAll('\\', '/')).toContain(`${folder.replaceAll('\\', '/')}/assets/task-profiles/${skill.id}.md`);
     const body = await readFile(path.join(folder, `assets/task-profiles/${skill.id}.md`), 'utf8');
     expect(body).not.toMatch(/requiredDeliverables|resultRef=|outcome=completed/);
     expect(assets.taskResources.some(r => r.path.endsWith(`/${skill.id}.md`))).toBe(true);

@@ -110,12 +110,6 @@ async function reportPackagedLaunch(event: Parameters<typeof reportLaunchEvent>[
   if (startupTelemetryContext) await reportLaunchEvent({ ...startupTelemetryContext, event, properties });
 }
 
-function applyPackagedUpdaterEnv(updateMetadataUrl: string | null): void {
-  if (updateMetadataUrl == null) return;
-  if (process.env.OD_UPDATE_METADATA_URL != null && process.env.OD_UPDATE_METADATA_URL.length > 0) return;
-  process.env.OD_UPDATE_METADATA_URL = updateMetadataUrl;
-}
-
 async function main(): Promise<void> {
   const config = await readPackagedConfig();
   const headlessRequest = parsePackagedHeadlessRequest(process.argv.slice(1));
