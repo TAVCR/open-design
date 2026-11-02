@@ -219,6 +219,8 @@ export type DesktopMainOptions = {
   registerDesktopAuth: (secret: Buffer) => Promise<boolean>;
   /** Stable installed launcher used for Windows opendesign:// registration. */
   inviteProtocolClientPath?: string | null;
+  /** Packaged forks can preserve the official app's OS invite handler. */
+  registerInviteProtocolClient?: boolean;
   preloadPath?: string;
   windowTitle?: string;
   onDesktopReady?: (controls: {
@@ -1148,6 +1150,7 @@ async function runDesktopMainWithTiming(
       console.info("[open-design desktop] invite deeplink continuation completed", outcome);
     },
     protocolClientPath: options.inviteProtocolClientPath,
+    registerProtocolClient: options.registerInviteProtocolClient,
   });
   const discoverUpdaterAppConfigBaseUrl = resolveDaemonBaseUrl(options);
   updateScheduler = createDesktopUpdaterScheduler(updater, {

@@ -81,6 +81,7 @@ import { startPackagedSidecars } from "./sidecars.js";
 import { classifyStartupFailure, reportLaunchEvent, reportStartupFailure, resolveStartupDistinctId } from "./startup-telemetry.js";
 import { resolvePackagedWindowTitle } from "./window-title.js";
 import { syncWindowsUninstallDisplayVersion } from "./windows-lifecycle.js";
+import { applyPackagedUpdaterEnv, isCodexPackagedBuild } from "./updater-policy.js";
 
 let packagedLogger: PackagedDesktopLogger | null = null;
 let packagedStartupTiming: StartupTiming | null = null;
@@ -329,7 +330,7 @@ async function main(): Promise<void> {
     platform: process.platform,
   });
   applyPackagedElectronPathOverrides(paths);
-  applyPackagedUpdaterEnv(activeConfig.updateMetadataUrl);
+  applyPackagedUpdaterEnv(activeConfig);
   if (!claimPackagedSingleInstanceLock(app, (argv) => {
     secondInstanceHandoff.handle(findPackagedDeeplinkArg(argv));
   })) {
@@ -470,6 +471,7 @@ async function main(): Promise<void> {
       }
     },
     windowTitle: resolvePackagedWindowTitle(activeConfig),
+    registerInviteProtocolClient: !isCodexPackagedBuild(activeConfig),
     inviteProtocolClientPath:
       process.platform === "win32" ? launcherRuntime.installedLaunchPath : null,
     async onExternalShow() {

@@ -210,14 +210,14 @@ describe('Vela media provider', () => {
     await expect(stat(tempOutputDirs[0]!)).rejects.toThrow();
   });
 
-  it('routes the removed Codex image model id through Vela for existing projects', async () => {
+  it('preserves explicit Cloud image model routing for existing projects', async () => {
     mockReadyImage();
 
     const result = await generateMedia({
       ...baseArgs(),
       surface: 'image',
-      model: 'codex-gpt-image-2',
-      output: 'legacy-project.png',
+      model: 'vela/gpt-image-2',
+      output: 'cloud-project.png',
       aspect: '1:1',
     });
 

@@ -129,6 +129,13 @@ lets the model's own default decide. A size or tier the user names IS that
 ask, in any language — "2K", "1k", "high quality", "高质量" — so map it onto
 the flag; restating it inside the prompt text does not reach the provider.
 
+The \`codex-gpt-image-2\` model uses the user's ChatGPT subscription through
+the daemon's Codex CLI provider. It requires Codex CLI sign-in and image-generation
+capability; it does not use an OpenAI API key. All Coding Agents invoke it through
+\`"$OD_NODE_BIN" "$OD_BIN" media generate --surface image --model codex-gpt-image-2\`.
+Keep the user's explicit model ID. Never silently substitute an OpenAI API or
+Cloud model when the subscription route is unavailable; report the actual failure.
+
 OpenDesign Cloud image and video models use the \`vela/*\` catalogue prefix.
 Always invoke those models through \`"$OD_NODE_BIN" "$OD_BIN" media generate\`.
 Never invoke the \`vela\` CLI directly and never call its remote media API.

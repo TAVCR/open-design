@@ -1,4 +1,12 @@
-<h1 align="center">OpenDesign: The 1st Collaborative AI Design Agent Workspace</h1>
+<h1 align="center">Open Design Codex — Gustavo's custom fork</h1>
+
+This fork restores subscription-backed image generation through Codex CLI.
+Select `gpt-image-2 (Codex)` to use native imagegen, with no automatic switch to
+a paid Cloud or API provider. Windows builds use a separate `codex` namespace
+and disable the official updater. See [setup and build instructions](docs/codex-imagegen-fork.md).
+
+Based on upstream Open Design 0.25.0, licensed under Apache-2.0. The upstream
+product information below describes the original project.
 
 > ✨ **[Celebrating 100K GitHub stars with OpenDesign Go](https://open-design.ai/pricing/)** — Go credits are doubled: **$8 for your first month, with up to $120 in monthly credits for eligible Design Plan models**. Use them across 10+ models, including GPT-6 Luna, DeepSeek V4.1 Flash, GLM-5.3 Flash-X, and MiMo V2.6 Flash. All personal plans include API access for Codex, Claude Code, DSH, OpenCode, and more.
 

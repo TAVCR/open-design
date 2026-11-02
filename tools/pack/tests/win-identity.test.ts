@@ -10,12 +10,53 @@ import winCustomInstallerSource from "@/win/custom-installer.ts?raw";
 import {
   createLauncherRuntimeSyncPowerShellScript,
   createNsisQuotedCommandLiteral,
+  writeInstallerScript,
 } from "@/win/custom-installer.js";
+import { resolveToolPackConfig } from "@/config/index.js";
+import { resolveWinPaths } from "@/win/paths.js";
 import { resolveWinInstallIdentity } from "@/win/identity.js";
 
 const execFileAsync = promisify(execFile);
 
 describe("resolveWinInstallIdentity", () => {
+  it("isolates the codex fork from official shortcuts and registry entries", () => {
+    const fork = resolveWinInstallIdentity({ appVersion: "0.24.1-codex.1", namespace: "codex" });
+    expect(fork).toMatchObject({
+      appPathsKey: "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Open Design Codex.exe",
+      displayName: "Open Design Codex",
+      registryKey: "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Open Design-codex",
+      registerInviteProtocol: false,
+      shortcutName: "Open Design Codex.lnk",
+      uninstallerName: "Uninstall Open Design Codex.exe",
+    });
+    const stable = resolveWinInstallIdentity({ appVersion: "0.24.1", namespace: "release-stable-win" });
+    expect(fork.registryKey).not.toBe(stable.registryKey);
+    expect(fork.appPathsKey).not.toBe(stable.appPathsKey);
+    expect(fork.shortcutName).not.toBe(stable.shortcutName);
+    expect(stable.registerInviteProtocol).toBe(true);
+  });
+
+  it("preserves the official OS invite handler in the generated codex installer and uninstaller", async () => {
+    const root = await mkdtemp(join(tmpdir(), "od-fork-installer-"));
+    try {
+      for (const identity of [
+        { appVersion: "0.24.1-codex.1", namespace: "codex", register: false },
+        { appVersion: "0.24.1", namespace: "codex", register: false },
+        { appVersion: "0.24.1", namespace: "release-stable-win", register: true },
+      ]) {
+        const config = resolveToolPackConfig("win", { ...identity, dir: root, to: "nsis", portable: true });
+        const paths = resolveWinPaths(config);
+        await writeInstallerScript(config, paths, identity.appVersion);
+        const script = await readFile(paths.installerScriptPath, "utf8");
+        expect(script.includes('WriteRegStr HKCU "Software\\Classes\\opendesign"')).toBe(identity.register);
+        expect(script.includes('DeleteRegKey HKCU "Software\\Classes\\opendesign"')).toBe(identity.register);
+        expect(script.includes('ReadRegStr $0 HKCU "Software\\Classes\\opendesign')).toBe(identity.register);
+      }
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   it("keeps the default namespace on the canonical Windows display name", () => {
     expect(resolveWinInstallIdentity({ namespace: "default" })).toMatchObject({
       displayName: "Open Design",

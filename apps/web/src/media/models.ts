@@ -28,6 +28,7 @@ import type { AudioKind, MediaAspect } from '../types';
  * providers must be added to {@link MEDIA_PROVIDERS} below.
  */
 export type MediaProviderId =
+  | 'codex'
   | 'openai'
   | 'vela'
   | 'volcengine'
@@ -84,6 +85,14 @@ export interface MediaProvider {
  * configured a key.
  */
 export const MEDIA_PROVIDERS: MediaProvider[] = [
+  {
+    id: 'codex',
+    label: 'Codex',
+    hint: 'ChatGPT subscription image generation through Codex CLI',
+    integrated: true,
+    credentialsRequired: false,
+    settingsVisible: false,
+  },
   {
     id: 'openai',
     label: 'OpenAI',
@@ -326,7 +335,8 @@ export interface MediaModel {
  * `packages/model-bank/src/aiModels/openai.ts` and friends in lobehub.
  */
 export const IMAGE_MODELS: MediaModel[] = [
-  { id: 'vela/gpt-image-2', label: 'gpt-image-2 (Cloud)', hint: 'OpenDesign Cloud · managed image generation and editing', provider: 'vela', caps: ['t2i', 'i2i'], default: true },
+  { id: 'codex-gpt-image-2', label: 'gpt-image-2 (Codex)', hint: 'Codex · ChatGPT subscription · sign in with Codex CLI', provider: 'codex', caps: ['t2i', 'i2i'], default: true },
+  { id: 'vela/gpt-image-2', label: 'gpt-image-2 (Cloud)', hint: 'OpenDesign Cloud · managed image generation and editing', provider: 'vela', caps: ['t2i', 'i2i'] },
   { id: 'vela/nano-banana-2', label: 'nano-banana-2 (Cloud)', hint: 'OpenDesign Cloud · managed image generation and editing', provider: 'vela', caps: ['t2i', 'i2i'] },
   { id: 'vela/nano-banana-2-lite', label: 'nano-banana-2-lite (Cloud)', hint: 'OpenDesign Cloud · fast managed image generation and editing', provider: 'vela', caps: ['t2i', 'i2i'] },
   { id: 'vela/seedream-5.0', label: 'seedream-5.0 (Cloud)', hint: 'OpenDesign Cloud · managed image generation and editing', provider: 'vela', caps: ['t2i', 'i2i'] },
@@ -692,8 +702,6 @@ const MEDIA_MODEL_ALIASES: Readonly<Record<string, string>> = {
   'nano-banana': 'vela/nano-banana-2',
   'nano-banana-2': 'vela/nano-banana-2',
   'nano-banana-2-lite': 'vela/nano-banana-2-lite',
-  // Preserve existing project metadata while removing the Codex renderer.
-  'codex-gpt-image-2': 'vela/gpt-image-2',
 };
 
 export function canonicalMediaModelId(id: string): string {
@@ -703,12 +711,12 @@ export function canonicalMediaModelId(id: string): string {
 /**
  * A prompt template recommends a model family; it is not an explicit BYOK
  * provider choice. Legacy first-party templates used the unqualified
- * `gpt-image-2` family id, so keep those on the managed Cloud route while
+ * `gpt-image-2` family id, so use this fork's Codex subscription route while
  * preserving `gpt-image-2` for users who select OpenAI directly.
  */
 export function imageModelIdForPromptTemplate(id: string): string {
   const normalized = id.trim();
-  if (normalized === 'gpt-image-2') return 'vela/gpt-image-2';
+  if (normalized === 'gpt-image-2') return 'codex-gpt-image-2';
   return canonicalMediaModelId(normalized);
 }
 
