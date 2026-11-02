@@ -888,6 +888,7 @@ import { registerDeployRoutes, registerDeploymentCheckRoutes } from './routes/de
 import { registerMediaRoutes } from './routes/media.js';
 import { registerProjectRoutes, registerProjectArtifactRoutes, registerProjectFileRoutes, registerProjectUploadRoutes, createEnforceWorkspaceProjectMutation } from './routes/project/index.js';
 import { registerProjectChatArtifactRoutes } from './routes/project/chat-artifacts.js';
+import { registerCompositionRoutes } from './routes/composition.js';
 import { createChatArtifactBlobStore } from './chat-artifacts/blob-store.js';
 import { resolveChatArtifactQuota } from './chat-artifacts/quota.js';
 import {
@@ -9790,6 +9791,7 @@ export async function startServer({
   });
   // Immutable chat-artifact snapshot reads. Same read authority as /raw; see
   // routes/project/chat-artifacts.ts for the gate chain.
+  registerCompositionRoutes(app, { db, http: httpDeps, paths: pathDeps, projectStore: projectStoreDeps, authorizeProjectRequest });
   registerProjectChatArtifactRoutes(app, {
     db,
     http: httpDeps,

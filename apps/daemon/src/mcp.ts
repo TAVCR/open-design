@@ -37,6 +37,8 @@ import {
   type WorkspaceProjectsResponse,
 } from '@open-design/contracts';
 import { randomUUID } from 'node:crypto';
+import { COMPOSITION_TOOL_DEF, handleCompositionMcpTool } from './mcp-composition.js';
+import { MEDIA_TOOL_DEFS, MEDIA_TOOL_NAMES, handleMediaMcpTool } from './mcp-media.js';
 
 import { postCreateArtifactRequest } from './artifacts/create.js';
 import { resolveMcpWorkspaceContext } from './mcp-workspace-context.js';
@@ -73,6 +75,8 @@ export const OPEN_DESIGN_BRIEF_APP_RESOURCE =
 export const MCP_SERVER_INSTRUCTIONS = [
   'Use only these product names in user-facing replies: OpenDesign Cloud and Local Codex.',
   'Tool names, runtime ids, endpoints, and correlation values are machine protocol. Never repeat them as product copy.',
+  'For managed compositions, change only the requested editable layer and preserve unchanged images. Text and geometry edits do not require image generation. Never automatically reconstruct flattened artwork or migrate arbitrary source files.',
+  'For image generation, inspect task status and continue waiting with its cursor; an empty progress interval is not failure. Never repeat an ambiguous submission automatically. Actual transparency requires decoded alpha evidence.',
 ].join('\n');
 
 type JsonObject = Record<string, unknown>;
@@ -113,6 +117,9 @@ interface McpToolCallResult {
 }
 
 const SAFE_MCP_DAEMON_RETRY_CALLS = new Set([
+  'list_media_tasks',
+  'get_media_task',
+  'wait_media_task',
   'get_active_context',
   'get_artifact',
   'get_file',
@@ -361,6 +368,8 @@ const EXTERNAL_PLUGIN_CONTEXT_ARG = {
 } as const;
 
 export const TOOL_DEFS = [
+  COMPOSITION_TOOL_DEF,
+  ...MEDIA_TOOL_DEFS,
   {
     name: 'collect_brief',
     description:
@@ -2143,6 +2152,8 @@ function publicVelaLoginStatus(status: unknown): unknown {
 // 400 with WORKSPACE_CONTEXT_REQUIRED (#6569). These resolve the signed-in
 // workspace and send x-od-workspace-* headers on every daemon call.
 const PROJECT_OR_RUN_TOOLS = new Set([
+  'composition',
+  ...MEDIA_TOOL_NAMES,
   'list_projects',
   'get_project',
   'get_file',
@@ -2171,6 +2182,13 @@ async function handleMcpToolCall(
       : null;
     const headers = workspaceContext?.headers;
     const workspaceId = workspaceContext?.workspaceId;
+    if (name === 'composition' || MEDIA_TOOL_NAMES.has(String(name))) {
+      const { id } = await resolveProjectArg(baseUrl, args.project, headers);
+      const result = name === 'composition'
+        ? await handleCompositionMcpTool(baseUrl, args, id, headers)
+        : await handleMediaMcpTool(baseUrl, String(name), args, id, headers);
+      return ok(result as JsonObject);
+    }
     switch (name) {
       case 'collect_brief': {
         const collected = (options.briefStore ?? createLocalMcpBriefStore())

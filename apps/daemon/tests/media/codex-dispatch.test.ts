@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -37,4 +37,30 @@ describe('explicit Codex dispatcher', () => {
     await expect(generateMedia({ ...request(), model: 'gpt-image-2' })).rejects.toThrow(/no OpenAI credential/);
     expect(mocks.render).not.toHaveBeenCalled(); expect(fetch).not.toHaveBeenCalled();
   });
+  it('uses the imported project root for references and generated originals', async () => {
+    const external=path.join(root,'linked'); await mkdir(external);
+    await writeFile(path.join(external,'ref.png'),png);
+    mocks.render.mockResolvedValue({bytes:png,suggestedExt:'.png',providerNote:'native'});
+    await generateMedia({...request(), projectMetadata:{baseDir:external}, images:['ref.png']});
+    expect(await readFile(path.join(external,'result.png'))).toEqual(png);
+    expect(mocks.render).toHaveBeenCalledWith(expect.objectContaining({projectDir:external,imageRefs:[expect.objectContaining({abs:path.join(external,'ref.png')})]}));
+    await expect(readFile(path.join(root,'projects','sample','result.png'))).rejects.toThrow();
+  });
+  it('rejects references through a project junction to an external directory before provider dispatch', async () => {
+    const dir=path.join(root,'projects','sample'), outside=path.join(root,'private');
+    await mkdir(dir,{recursive:true}); await mkdir(outside); await writeFile(path.join(outside,'ref.png'),png);
+    await symlink(outside,path.join(dir,'alias'),process.platform==='win32'?'junction':'dir');
+    await expect(generateMedia({...request(),images:['alias/ref.png']})).rejects.toThrow(/outside|escape/i);
+    expect(mocks.render).not.toHaveBeenCalled();
+  });
+  it('rejects output symlink escape before consuming the native provider', async (context) => {
+    const dir=path.join(root,'projects','sample'), outside=path.join(root,'private.png');
+    await mkdir(dir,{recursive:true}); await writeFile(outside,png);
+    try { await symlink(outside,path.join(dir,'result.png'),'file'); }
+    catch(error) { if((error as NodeJS.ErrnoException).code==='EPERM') {context.skip();return;} throw error; }
+    await expect(generateMedia(request())).rejects.toThrow(/outside|escape/i);
+    expect(mocks.render).not.toHaveBeenCalled();
+    expect(await readFile(outside)).toEqual(png);
+  });
+
 });
