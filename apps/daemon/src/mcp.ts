@@ -67,7 +67,9 @@ import {
 
 const SERVER_NAME = 'open-design';
 const SERVER_VERSION = '0.2.0';
-const DEFAULT_MCP_STDIO_IDLE_EXIT_MS = 30 * 60 * 1000;
+// Desktop clients may stay idle between turns. A silent timeout leaves their
+// cached transport permanently closed; use stdin EOF or an explicit opt-in limit.
+const DEFAULT_MCP_STDIO_IDLE_EXIT_MS = 0;
 const MAX_MCP_STDIO_IDLE_EXIT_MS = 24 * 60 * 60 * 1000;
 export const OPEN_DESIGN_BRIEF_APP_RESOURCE =
   'ui://open-design/artifact-card-v8.html';

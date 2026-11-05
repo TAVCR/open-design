@@ -5,8 +5,8 @@ import {
 } from '../src/mcp.js';
 
 describe('MCP stdio idle exit timeout', () => {
-  it('defaults to 30 minutes', () => {
-    expect(_resolveMcpStdioIdleExitMs({})).toBe(30 * 60 * 1_000);
+  it('keeps desktop MCP connections alive by default', () => {
+    expect(_resolveMcpStdioIdleExitMs({})).toBe(0);
   });
 
   it('normalizes an environment override', () => {
@@ -30,7 +30,7 @@ describe('MCP stdio idle exit timeout', () => {
     for (const value of ['', '   ', '-1', 'not-a-number']) {
       expect(
         _resolveMcpStdioIdleExitMs({ OD_MCP_STDIO_IDLE_EXIT_MS: value }),
-      ).toBe(30 * 60 * 1_000);
+      ).toBe(0);
     }
   });
 });
@@ -107,10 +107,10 @@ describe('MCP stdio idle exit controller', () => {
     expect(onIdle).not.toHaveBeenCalled();
   });
 
-  it('does not schedule an exit when disabled', async () => {
+  it('keeps the default connection usable after a full day of inactivity', async () => {
     vi.useFakeTimers();
     const onIdle = vi.fn();
-    const idleExit = _createMcpIdleExitController({ idleMs: 0, onIdle });
+    const idleExit = _createMcpIdleExitController({ idleMs: _resolveMcpStdioIdleExitMs({}), onIdle });
 
     expect(vi.getTimerCount()).toBe(0);
 
