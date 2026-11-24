@@ -52,7 +52,7 @@ import { injectMotionSourcePlayer, isMotionVideoComposition, markMotionFrameRend
 // so the CLI can exit non-zero and the agent can't silently narrate the
 // placeholder as the final result.
 
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { execFile as execFileCb, spawn } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
@@ -97,8 +97,10 @@ import {
 } from './hyperframes-runtime.js';
 import { prepareHyperFramesAudio, hyperFramesAudioEncodingArgs, type HyperFramesAudioTrack } from './hyperframes-audio.js';
 import { renderVelaImage, renderVelaVideo } from './vela.js';
+import { renderCodexImage } from './codex-imagegen.js';
 import {
   ensureProject,
+  resolveProjectWritePath,
   kindFor,
   mimeFor,
   sanitizeName,
@@ -240,8 +242,8 @@ function stubsAllowed() {
  */
 async function resolveProjectImage(rel: unknown, projectDir: string): Promise<ImageRef | null> {
   if (typeof rel !== 'string' || !rel.trim()) return null;
-  const projectRootResolved = path.resolve(projectDir);
-  const abs = path.resolve(projectRootResolved, rel.trim());
+  const projectRootResolved = await realpath(projectDir);
+  let abs = path.resolve(projectRootResolved, rel.trim());
   if (
     abs !== projectRootResolved &&
     !abs.startsWith(projectRootResolved + path.sep)
@@ -252,8 +254,14 @@ async function resolveProjectImage(rel: unknown, projectDir: string): Promise<Im
   }
   let info;
   try {
+    const actual = await realpath(abs);
+    if (actual !== projectRootResolved && !actual.startsWith(projectRootResolved + path.sep)) {
+      throw new Error('Reference image resolves outside the project directory');
+    }
+    abs = actual;
     info = await stat(abs);
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('outside the project')) throw error;
     throw new Error(`--image not found: ${rel}`);
   }
   if (!info.isFile()) {
@@ -356,6 +364,8 @@ export async function generateMedia(args: {
   compositionDir?: string; image?: string; images?: string[]; onProgress?: ProgressFn; requestInit?: MediaRequestInit;
   desktopFrameRenderer?: DesktopFrameRenderer | null;
   workspaceId?: string;
+  projectMetadata?: Parameters<typeof ensureProject>[2];
+  signal?: AbortSignal;
   onProviderRequestSettled?: (summary: ImageGenerationRequestSummary & { providerId: string }) => void;
   /**
    * Called once with the EXACT provider bytes that were just written, while
@@ -400,6 +410,7 @@ export async function generateMedia(args: {
     image,
     requestInit,
     workspaceId,
+    projectMetadata,
     onProviderRequestSettled,
   } = args;
 
@@ -508,11 +519,11 @@ export async function generateMedia(args: {
     : durationClamp.value;
   const warnings = [lengthClamp.warning, durationClamp.warning].filter(Boolean);
 
-  const dir = await ensureProject(projectsRoot, projectId);
+  const dir = await ensureProject(projectsRoot, projectId, projectMetadata);
   const safeOut = sanitizeName(
     output || autoOutputName(surface, model, resolvedAudioKind),
   );
-  const target = path.join(dir, safeOut);
+  const target = await resolveProjectWritePath(projectsRoot, projectId, safeOut, projectMetadata);
   await mkdir(path.dirname(target), { recursive: true });
 
   // Reference image for image-to-video / image-edit flows. The agent
@@ -608,7 +619,15 @@ export async function generateMedia(args: {
     customImageCredentials,
   );
   try {
-    if (
+    if (def.provider === 'codex' && surface === 'image') {
+      const result = await renderCodexImage({
+        projectRoot, projectDir: dir, model: canonicalModel, prompt: ctx.prompt,
+        aspect: ctx.aspect, imageRefs, signal: args.signal, onProgress: args.onProgress,
+      });
+      bytes = result.bytes;
+      providerNote = result.providerNote;
+      suggestedExt = result.suggestedExt;
+    } else if (
       def.provider === 'openai'
       && surface === 'image'
       && customImageOverride
@@ -825,7 +844,7 @@ export async function generateMedia(args: {
     // HyperFrames is a local render, not a remote provider. Falling back
     // to a stub here hides actionable composition/preflight failures and
     // can make the agent retry or narrate a fake MP4 as success.
-    if (def.provider === 'hyperframes' || def.provider === 'vela') {
+    if (def.provider === 'hyperframes' || def.provider === 'vela' || def.provider === 'codex') {
       throw err;
     }
     // A real provider failed (network blip, 4xx, missing key, …). We
@@ -871,7 +890,7 @@ export async function generateMedia(args: {
     const stem = dot > 0 ? safeOut.slice(0, dot) : safeOut;
     finalOut = `${stem}${suggestedExt}`;
   }
-  const finalTarget = path.join(dir, finalOut);
+  const finalTarget = await resolveProjectWritePath(projectsRoot, projectId, finalOut, projectMetadata);
   await writeFile(finalTarget, bytes);
   const st = await stat(finalTarget);
   if (args.onBytesWritten) {
